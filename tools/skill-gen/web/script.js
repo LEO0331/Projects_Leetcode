@@ -74,6 +74,12 @@
     }
   }
 
+  function resetGeneratedOutput() {
+    outputEl.value = '';
+    downloadBtn.disabled = true;
+    copyBtn.disabled = true;
+  }
+
   function readFile(file) {
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
@@ -128,6 +134,7 @@
   }
 
   fileInput.addEventListener('change', function () {
+    resetGeneratedOutput();
     hydrateFromFiles(fileInput.files, t('sourceUpload')).catch(function (err) {
       setStatus(t('uploadErr') + err.message, 'error');
       alert(t('uploadErr') + err.message);
@@ -135,6 +142,7 @@
   });
 
   folderInput.addEventListener('change', function () {
+    resetGeneratedOutput();
     hydrateFromFiles(folderInput.files, t('sourceFolder')).catch(function (err) {
       setStatus(t('folderErr') + err.message, 'error');
       alert(t('folderErr') + err.message);
@@ -178,12 +186,18 @@
     }
   });
 
+  [indexEl, styleEl, scriptEl, featureNameEl, modeEl].forEach(function (el) {
+    el.addEventListener('input', resetGeneratedOutput);
+    el.addEventListener('change', resetGeneratedOutput);
+  });
+
   generateBtn.addEventListener('click', function () {
     var indexHtml = indexEl.value.trim();
     var styleCss = styleEl.value.trim();
     var scriptJs = scriptEl.value.trim();
 
     if (!indexHtml || !styleCss || !scriptJs) {
+      resetGeneratedOutput();
       setStatus(t('missing'), 'error');
       alert(t('missingAlert'));
       return;

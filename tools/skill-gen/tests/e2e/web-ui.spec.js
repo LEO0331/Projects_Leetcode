@@ -91,4 +91,28 @@ test.describe('skill-gen web UI', () => {
     await expect(page.locator('#output')).toHaveAttribute('aria-labelledby', 'outputHeading');
     await expect(page.locator('#output')).toHaveAttribute('title', '產生結果');
   });
+
+  test('editing inputs invalidates stale generated output', async ({ page }) => {
+    await page.goto('/web/index.html');
+
+    page.on('dialog', (dialog) => dialog.dismiss());
+
+    await page.locator('#indexHtml').fill('<html><head><title>Draft A</title></head><body><div id="a"></div></body></html>');
+    await page.locator('#styleCss').fill('#a { color: red; }');
+    await page.locator('#scriptJs').fill("document.getElementById('a').addEventListener('click', function () {});");
+    await page.getByRole('button', { name: 'Generate SKILL.md' }).click();
+
+    await expect(page.locator('#output')).toHaveValue(/# Mini Feature Skill/);
+    await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeEnabled();
+
+    await page.locator('#scriptJs').fill('');
+    await expect(page.locator('#output')).toHaveValue('');
+    await expect(page.getByRole('button', { name: 'Download' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeDisabled();
+
+    await page.getByRole('button', { name: 'Generate SKILL.md' }).click();
+    await expect(page.locator('#statusText')).toContainText('Provide all 3 files before generating.');
+    await expect(page.locator('#output')).toHaveValue('');
+  });
 });
